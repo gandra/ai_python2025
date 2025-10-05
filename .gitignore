@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# env
+aipy_venv/
+
 # Distribution / packaging
 .Python
 build/
