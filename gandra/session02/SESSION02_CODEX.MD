@@ -90,36 +90,9 @@ Notes:
 - The notebook contains a TODO (“Call the embeddings”). Use the exact call shown above to complete it, then assign `df["embedding"] = embeddings`.
 - Some rows may have empty text; we store `None` to skip them later.
 
-Detailed (exact steps to fix the TODO):
-- Where: in `gandra/session02.ipynb`, the cell that defines `api_key`, `client`, `model_name`, and `embeddings = []`, and starts the loop `for idx, row in df.iterrows():` has a comment `# Call the embeddings` — that’s where code is missing.
-- What to paste right under that comment (inside the loop):
+### Detailed (exact steps to fix the TODO):
 
-  ```python
-  resp = client.embeddings.create(
-      model=model_name,
-      input=[text]
-  )
-  emb = resp.data[0].embedding
-  embeddings.append(emb)
-  ```
-
-- Then, still in the same cell, but AFTER the loop finishes (i.e., no indent), add:
-
-  ```python
-  df["embedding"] = embeddings
-  print("Embeddings computed:", len(embeddings))
-  ```
-
-- Finally, run the next small checks only after the cell above has executed successfully:
-
-  ```python
-  type(df['embedding'][0])   # should be list
-  len(df['embedding'][0])    # should be 1536
-  ```
-
-If you get a KeyError on `df['embedding']`:
-- It means the assignment `df["embedding"] = embeddings` didn’t run (or you didn’t re‑execute the cell). Restart the kernel or re‑run cells in order.
-- Also check that `embeddings` has the same number of elements as `len(df)`; each row should contribute one list (or `None`).
+TODO...
 
 Quick checks:
 
@@ -313,6 +286,75 @@ prompt_recipes = prompt_recipes.strip()
 ```
 
 Tip: In the notebook, `top5` is used both for cosine indices and later as a DataFrame. To avoid confusion, use different names like `top5_idx` (indices) and `top5_df` (DataFrame).
+
+---
+
+## 7b. Jaccard Similarity — Deep Dive
+
+What it measures (beginner‑friendly):
+- Think of each recipe and the user’s wish list as checklists (binary features 0/1).
+- Jaccard similarity tells you “what fraction of the combined checklist is actually shared”. If both want pasta and tomato, that’s overlap; if the recipe has cheese but the user didn’t ask for it, that is counted only in the union (not the overlap).
+
+Set definition (classic):
+- For sets A and B:  similarity_J(A, B) = |A ∩ B| / |A ∪ B|
+- Distance is 1 − similarity. SciPy’s `distance.jaccard(u, v)` returns the distance, not the similarity.
+
+Binary‑vector view (what we use here):
+- Treat 0/1 vectors. Overlap is positions where both have 1. Union is positions where at least one has 1.
+
+Small example (intuition):
+```
+user = [1, 1, 1, 0]        # pasta, tomato, cheese, not baked
+recA = [1, 1, 1, 0]        # perfect match → overlap=3, union=3 → sim=1.0
+recB = [1, 1, 0, 1]        # overlap=2 (pasta,tomato), union=4 → sim=0.5
+```
+
+SciPy behavior and gotchas:
+- `distance.jaccard(u, v)` expects 1D arrays of equal length; non‑binary values are allowed but interpret carefully.
+- For binary use‑cases, ensure ints 0/1: `astype(int)` and clamp values if needed.
+- If both vectors are all zeros (no features set), SciPy returns distance 0.0 (they are identical), so similarity = 1 − 0 = 1.0. In practice, you might want to special‑case “all zeros” as “no information” and treat similarity as 0.0 — pick the convention that matches your product logic.
+
+Manual implementation (for clarity):
+```python
+import numpy as np
+
+def jaccard_similarity_binary(a, b):
+    a = np.asarray(a).astype(int)
+    b = np.asarray(b).astype(int)
+    intersection = np.sum((a == 1) & (b == 1))
+    union = np.sum((a == 1) | (b == 1))
+    return 1.0 if union == 0 else intersection / union
+
+# Compare with SciPy
+from scipy.spatial import distance
+def jaccard_similarity_scipy(a, b):
+    return 1 - distance.jaccard(a, b)
+```
+
+Weighted Jaccard (when features have strengths, not just 0/1):
+- If you have non‑negative counts or weights per feature, a common variant is:
+  similarity_wJ(a, b) = sum(min(a_i, b_i)) / sum(max(a_i, b_i))
+- This down‑weights mismatches and rewards overlap where both have larger values.
+
+Practical pipeline tips (to avoid bugs):
+- Align columns: ensure `feature_cols` in the user vector and DataFrame are in the same order. Use a single `expected` list as the source of truth.
+- Validate keys from LLM: fill missing keys with 0; coerce values to 0/1.
+- Keep types tidy: `df[feature_cols].astype(int).values` for the matrix; `user_vector.astype(int)`.
+- Handle “ties”: when several recipes tie on similarity, break ties by a secondary score (e.g., number of overlapping features, or cosine score if available).
+- Thresholding: optionally filter out low Jaccard matches (e.g., < 0.2) before prompting the LLM.
+
+End‑to‑end (the discrete track):
+1) LLM turns free‑text request into a binary feature JSON.  
+2) Parse → validate → build `user_vector`.  
+3) Compute Jaccard similarity vs. every recipe (row in `feature_matrix`).  
+4) Pick Top‑K (e.g., 5).  
+5) Build `prompt_recipes` from those rows and send to the chat model.
+
+Naming clarity:
+- Use `top5_idx` for cosine (indices), and `top5_df` for Jaccard (`df.nlargest(...)` returns a DataFrame). This avoids confusion later when iterating (`for i in top5_idx` vs `for _, row in top5_df.iterrows()`).
+
+Testing yourself (quick sanity):
+- Create two tiny binary vectors and compute both the manual and SciPy versions. Confirm they match. Then try corner cases (all zeros; no overlap; complete overlap).
 
 ---
 
