@@ -90,6 +90,37 @@ Notes:
 - The notebook contains a TODO (“Call the embeddings”). Use the exact call shown above to complete it, then assign `df["embedding"] = embeddings`.
 - Some rows may have empty text; we store `None` to skip them later.
 
+Detailed (exact steps to fix the TODO):
+- Where: in `gandra/session02.ipynb`, the cell that defines `api_key`, `client`, `model_name`, and `embeddings = []`, and starts the loop `for idx, row in df.iterrows():` has a comment `# Call the embeddings` — that’s where code is missing.
+- What to paste right under that comment (inside the loop):
+
+  ```python
+  resp = client.embeddings.create(
+      model=model_name,
+      input=[text]
+  )
+  emb = resp.data[0].embedding
+  embeddings.append(emb)
+  ```
+
+- Then, still in the same cell, but AFTER the loop finishes (i.e., no indent), add:
+
+  ```python
+  df["embedding"] = embeddings
+  print("Embeddings computed:", len(embeddings))
+  ```
+
+- Finally, run the next small checks only after the cell above has executed successfully:
+
+  ```python
+  type(df['embedding'][0])   # should be list
+  len(df['embedding'][0])    # should be 1536
+  ```
+
+If you get a KeyError on `df['embedding']`:
+- It means the assignment `df["embedding"] = embeddings` didn’t run (or you didn’t re‑execute the cell). Restart the kernel or re‑run cells in order.
+- Also check that `embeddings` has the same number of elements as `len(df)`; each row should contribute one list (or `None`).
+
 Quick checks:
 
 ```python
@@ -365,4 +396,3 @@ Definitions:
 - Shape/dtype issues → wrap lists with `np.array(...)` before calling `scipy` functions.
 
 That’s it — Session 02 gives you two retrieval tracks (vector vs. features) and shows how LLM sampling parameters affect responses. This is the foundation for more advanced RAG systems.
-
