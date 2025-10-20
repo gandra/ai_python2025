@@ -134,6 +134,9 @@ Notebook TODOs mirrored here:
 - Validate text before embedding; skip very short/noisy rows to reduce cost and noise.
 - Consider truncating overly long texts before embedding (model/context limits, cost).
 - After the loop, ensure `len(embeddings) == len(df)` before `df["embedding"] = embeddings`.
+- Use a robust check for the first available embedding when inspecting type/length:
+  - `# TODO: first non-None embedding index (avoid None at row 0)`
+  - `# TODO: use same first index from previous cell if available`
 
 ---
 
@@ -192,9 +195,9 @@ Math reminder:
 cos(θ) = (a · b) / (||a|| · ||b||)
 
 Notebook TODOs mirrored here:
-- Make Top‑K configurable via a variable (e.g., `TOP_K = 5`) instead of hard‑coding 5.
-- Consider filtering out `None` embeddings earlier (pre‑filter `df` or mask) to simplify scoring loop.
-- Prefer an explicit descending sort for clarity (or use `np.argpartition`) when selecting Top‑K.
+- `# TODO: Make top-K configurable` (e.g., `TOP_K = 5`) instead of hard‑coding 5.
+- `# TODO: Consider filtering out None embeddings earlier` (pre‑filter `df` or mask) to simplify scoring loop.
+- `# TODO: use descending sort for clarity` (or use `np.argpartition`) when selecting Top‑K.
 
 ---
 
@@ -373,7 +376,8 @@ Tip: In the notebook, `top5` is used both for cosine indices and later as a Data
 Notebook TODOs mirrored here:
 - Validate JSON keys/types after parsing (ensure all expected features exist and are 0/1; coerce types).
 - Ensure the feature order is aligned: derive `feature_cols` from a single `expected` list and use it for both `user_vector` and `df`.
-- Rename `top5` (DataFrame) to `top5_df` for clarity; iterate with `for _, row in top5_df.iterrows():` when building `prompt_recipes`.
+- `# TODO: rename top5 -> top5_df for clarity` (use a name that reflects a DataFrame result from `nlargest`).
+- `# TODO: top5 is a DataFrame; consider renaming to top5_df` and iterate with `for _, row in top5_df.iterrows():` when building `prompt_recipes`.
 
 ---
 
@@ -491,7 +495,7 @@ Definitions:
 - `top_p` (nucleus sampling): samples only from the smallest set of tokens whose cumulative probability ≥ `top_p`. Lower `top_p` narrows the token pool; `top_p=1.0` uses the full distribution.
 
 Notebook TODOs mirrored here:
-- Explore `top_p` alongside `temperature` (add a sweep over `top_p` values such as 1.0, 0.9, 0.7 with a fixed `temperature`).
+- `# TODO: Explore top_p alongside temperature (nucleus sampling)` (add a sweep over `top_p` values such as 1.0, 0.9, 0.7 with a fixed `temperature`).
 
 ---
 
