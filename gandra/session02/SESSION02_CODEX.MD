@@ -101,6 +101,13 @@ type(df['embedding'][0])   # list
 len(df['embedding'][0])    # 1536 for text-embedding-3-small
 ```
 
+Notebook TODOs mirrored here:
+- Add try/except for API errors and model fallback when creating the `OpenAI` client and calling APIs.
+- Cache embeddings to disk to avoid recomputing later (e.g., save/load a Parquet/JSONL with the `embedding` column).
+- Validate text before embedding; skip very short/noisy rows to reduce cost and noise.
+- Consider truncating overly long texts before embedding (model/context limits, cost).
+- After the loop, ensure `len(embeddings) == len(df)` before `df["embedding"] = embeddings`.
+
 ---
 
 ## 4. User input and its embedding
@@ -157,6 +164,11 @@ Math reminder:
 
 cos(θ) = (a · b) / (||a|| · ||b||)
 
+Notebook TODOs mirrored here:
+- Make Top‑K configurable via a variable (e.g., `TOP_K = 5`) instead of hard‑coding 5.
+- Consider filtering out `None` embeddings earlier (pre‑filter `df` or mask) to simplify scoring loop.
+- Prefer an explicit descending sort for clarity (or use `np.argpartition`) when selecting Top‑K.
+
 ---
 
 ## 6. More distance/similarity metrics
@@ -194,6 +206,50 @@ Jaccard is used for sets/binary features:
 similarity_J(A,B) = |A ∩ B| / |A ∪ B|
 
 distance_J(A,B) = 1 − similarity
+
+---
+
+### 6b. Manhattan / Grid Distance — Deep Dive
+
+Intuition (beginner‑friendly):
+- Imagine grad sa ulicama u pravougaonoj mreži (kao Manhattan). Do cilja ideš samo gore/dole/levo/desno, ne dijagonalno.
+- “Grid distance” meri koliko blokova ukupno pređeš, bez obzira kojim ulicama (sve rute sa istom sumom koraka imaju istu dužinu).
+
+Matematika (L1 norma):
+- Za vektore a i b dužine n:
+  d_L1(a, b) = Σ_i |a_i − b_i|
+- U SciPy: `distance.cityblock(a, b)`; ekvivalentno: `np.sum(np.abs(a - b))`.
+
+Mali primer (brojevi):
+```
+a = [0, 0],  b = [3, 4]
+Euclidean (L2) = sqrt((3-0)^2 + (4-0)^2) = 5.0
+Manhattan (L1) = |3-0| + |4-0| = 3 + 4 = 7.0
+```
+- Dijagonalni “prečac” je kraći po L2, ali po L1 moraš “blok po blok” (bez dijagonale), zato je 7.
+
+Kada je koristan:
+- Visoko‑dimenzionalni i/ili retki (sparse) podaci: L1 je često robustniji od L2 jer ne kvadrira razlike (manje osetljiv na outliere).
+- Kada su dimenzije nezavisni, aditivni doprinosi greške (svaka dimenzija “druga ulica” koju moraš da pređeš).
+
+Napomene za embeddings i skaliranje:
+- Za tekstualne embeddings često bolje radi kosinusna sličnost (pravac > dužina). L1 može da radi, ali obično nije prvi izbor.
+- Skala svake dimenzije utiče na L1: standardizuj/normalizuj ako kombiniješ različite izvore karakteristika.
+
+Poređenje sa L2:
+- L1 = romb (dijamant) kao jedinicna “lopta”; L2 = krug/sfera. Ovo utiče na to kako algoritmi “vide” blizinu i susede.
+- L1 “kažnjava” svaku apsolutnu razliku linearno; L2 više kažnjava velike greške (kvadriranjem).
+
+Brzi kod (u praksi):
+```python
+from scipy.spatial import distance
+man_dist = distance.cityblock(a, b)
+# isto kao: man_dist = np.sum(np.abs(np.array(a) - np.array(b)))
+```
+
+Zaključak:
+- Ako misliš kao pešak po mreži ulica → L1 (Manhattan) ima smisla.
+- Ako misliš kao ptica koja leti “preko” → L2 (Euclidean) je prirodniji.
 
 ---
 
@@ -286,6 +342,11 @@ prompt_recipes = prompt_recipes.strip()
 ```
 
 Tip: In the notebook, `top5` is used both for cosine indices and later as a DataFrame. To avoid confusion, use different names like `top5_idx` (indices) and `top5_df` (DataFrame).
+
+Notebook TODOs mirrored here:
+- Validate JSON keys/types after parsing (ensure all expected features exist and are 0/1; coerce types).
+- Ensure the feature order is aligned: derive `feature_cols` from a single `expected` list and use it for both `user_vector` and `df`.
+- Rename `top5` (DataFrame) to `top5_df` for clarity; iterate with `for _, row in top5_df.iterrows():` when building `prompt_recipes`.
 
 ---
 
@@ -401,6 +462,9 @@ for T in [0.0, 0.75, 1.25, 1.5]:
 Definitions:
 - `temperature`: controls randomness. Lower → more deterministic; higher → more creative.
 - `top_p` (nucleus sampling): samples only from the smallest set of tokens whose cumulative probability ≥ `top_p`. Lower `top_p` narrows the token pool; `top_p=1.0` uses the full distribution.
+
+Notebook TODOs mirrored here:
+- Explore `top_p` alongside `temperature` (add a sweep over `top_p` values such as 1.0, 0.9, 0.7 with a fixed `temperature`).
 
 ---
 
