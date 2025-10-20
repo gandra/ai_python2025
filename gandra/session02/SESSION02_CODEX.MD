@@ -75,7 +75,8 @@ for idx, row in df.iterrows():
         embeddings.append(None)
         continue
 
-    # Call the embeddings endpoint
+    # Call the embeddings endpoint on the client
+    # TODO: Call the embeddings endpoint (completed)
     resp = client.embeddings.create(
         model=model_name,
         input=[text]
@@ -92,7 +93,33 @@ Notes:
 
 ### Detailed (exact steps to fix the TODO):
 
-TODO...
+- Where: in `gandra/session02/session02.ipynb`, locate the cell that defines `api_key`, `client`, `model_name`, `embeddings = []`, and the loop `for idx, row in df.iterrows():`. Inside that loop you will see the comment lines:
+  - `# Call the embeddings endpoint on the client`
+  - `# TODO: Call the embeddings endpoint (completed)`
+
+- What to paste right under those comment lines (inside the loop):
+  ```python
+  resp = client.embeddings.create(
+      model=model_name,
+      input=[text]
+  )
+  emb = resp.data[0].embedding
+  embeddings.append(emb)
+  ```
+
+- Then, still in the same cell but AFTER the loop finishes (no indent), add/keep:
+  ```python
+  df["embedding"] = embeddings
+  print("Embeddings computed:", len(embeddings))
+  ```
+
+- Finally, run the next small checks only after the cell above has executed successfully:
+  ```python
+  type(df['embedding'][0])   # should be list (or use first non-None index)
+  len(df['embedding'][0])    # should be 1536
+  ```
+
+- If you get `KeyError: 'embedding'`, it means the assignment `df["embedding"] = embeddings` didn’t run. Re‑execute that cell (or restart the kernel and run all cells in order). Also ensure `len(embeddings) == len(df)`.
 
 Quick checks:
 
