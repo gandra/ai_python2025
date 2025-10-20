@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from openai import OpenAI
 
+# EMBEDDINGS_PATH
 
 def load_data_frame(file_path: str):
     # ## 1. Let's grab some text... Italian cuisine, for example?
