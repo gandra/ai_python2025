@@ -37,6 +37,8 @@ docker compose logs -f pgvector
 Zdravstveniček (`healthcheck`) proverava dostupnost baze, pa status treba da pređe u `healthy` nakon inicijalizacije.
 
 ## 4. Prvi pristup i pgvector ekstenzija
+
+### Ručno kreiranje
 Poveži se preko `psql` i aktiviraj ekstenziju (u većini slučajeva dovoljno je uraditi jednom):
 
 ```bash
@@ -47,6 +49,28 @@ ai_rag=# \q
 ```
 
 Ako si promenio/la kredencijale, zameni `ai_rag` vrednostima koje koristiš.
+
+### Automatsko kreiranje pri prvom pokretanju
+PostgreSQL inicijalizacioni skriptovi iz direktorijuma `/docker-entrypoint-initdb.d` se izvršavaju samo kada se baza pokreće prvi put (tj. kada je data direktorijum prazan). To možemo iskoristiti da se `vector` ekstenzija kreira automatski:
+
+1. Kreiraj lokalni direktorijum, npr. `docker/initdb` i u njemu fajl `01-enable-pgvector.sql` sa sadržajem:
+
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS vector;
+    ```
+
+2. U `docker-compose.yml` dodaj mount za taj direktorijum (ili ga ubaci u postojeću `volumes` sekciju):
+
+    ```yaml
+    services:
+      pgvector:
+        volumes:
+          - ./docker/initdb:/docker-entrypoint-initdb.d
+    ```
+
+3. Obriši postojeći named-volume samo ako želiš da testiraš inicijalizaciju iz početka (`docker compose down -v`). Kod prvog sledećeg `docker compose up -d pgvector` Postgres će pokrenuti skript i ekstenzija će biti kreirana pre nego što se bilo koja aplikacija poveže na bazu.
+
+Ovaj pristup ne utiče na restart postojećeg kontejnera – ekstenzija će ostati aktivna jer je deo same baze, dok se skript izvršava samo pri prvom kreiranju volumena.
 
 ## 5. Zaustavljanje i čišćenje
 - Zaustavljanje: `docker compose down`
