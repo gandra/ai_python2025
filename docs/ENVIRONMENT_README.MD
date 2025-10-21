@@ -9,9 +9,10 @@ Ovaj dokument opisuje kako da ukloniš postojeći `conda` environment, postaviš
 
 ---
 
-## 1. Priprema i čišćenje starog okruženja
+## 1. Priprema i čišćenje okruženja
 
-[Priprema i čišćenje starog okruženja](ENV_CLEAN.MD)
+- [Priprema i čišćenje starog `conda` okruženja](ENV_UV.MD#cleanup-conda)
+- [Brisanje postojećeg `uv` okruženja](ENV_UV.MD#cleanup-uv)
 
 ---
 
