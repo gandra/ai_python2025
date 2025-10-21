@@ -10,9 +10,10 @@ dependencies = [
     "ipython==9.6.0",
     "jupyter-client==8.6.3",
     "jupyter-core==5.8.1",
+    "notebook>=7.4.7",
     "numpy==2.3.3",
     "openai==2.1.0",
     "pandas==2.3.3",
     "scipy==1.16.2",
-    "tqdm==4.67.1"
+    "tqdm==4.67.1",
 ]
