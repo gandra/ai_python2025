@@ -10,44 +10,14 @@ Ovaj dokument opisuje kako da ukloniš postojeći `conda` environment, postaviš
 ---
 
 ## 1. Priprema i čišćenje starog okruženja
-1. Uveri se da nijedan `conda` environment nije aktivan:
-   ```bash
-   conda deactivate
-   ```
-2. Ako je projekat koristio lokalni environment u `./env`, ugasi ga i obriši:
-   ```bash
-   # opciono proveri gde je napravljen env
-   conda env list | grep ai_python2025
 
-   # ukloni environment kreiran sa -p ./env
-   conda env remove -p "$(pwd)/env"
-   # ako iz nekog razloga remove ne prođe, obriši ručno
-   rm -rf env
-   ```
-3. (Opcionalno) Osveži shell konfiguraciju uklanjanjem referenci na `conda` ako ti više nisu potrebne (`~/.zshrc`, `~/.bashrc`).
+[Priprema i čišćenje starog okruženja](ENV_CLEAN.MD)
 
 ---
 
 ## 2. Instalacija `uv`
-1. Instaliraj `uv` (single-binary instalacija):
-   ```bash
-   curl -Ls https://astral.sh/install.sh | sh
-   ```
-2. Script će smestiti binarije u `~/.local/bin` (ili sličan direktorijum). Dodaj ga u `PATH` ako već nije:
-   ```bash
-   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-   source ~/.zshrc
-   ```
-3. Proveri instalaciju:
-   ```bash
-   uv --version
-   ```
 
-> Ako želiš da `uv` upravlja i Python binarijama, možeš instalirati željenu verziju:
-> ```bash
-> uv python install 3.12
-> ```
-> Kasnije prilikom kreiranja okruženja možeš eksplicitno ciljati verziju pomoću `--python 3.12`.
+[Instalacija uv](ENV_UV.MD)
 
 ---
 
