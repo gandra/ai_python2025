@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: ai_rag
       POSTGRES_PASSWORD: ai_rag_password
     ports:
-      - "5432:5432"
+      - "5422:5432"
     volumes:
       - pgvector-data:/var/lib/postgresql/data
     healthcheck:
