@@ -314,7 +314,13 @@ def main() -> None:
                 scores.append(-1.0)
             else:
                 scores.append(1.0 - cosine(np.array(emb), np.array(user_query_embedding)))
-        top5_idx = np.argsort(scores)[-5:][::-1]
+
+        print(scores)
+        print(type(scores))
+        sortedrersult = np.argsort(scores)
+        sorted5 = sortedrersult[-5:]
+        top5_idx = sorted5[::-1]
+
 
         output_lines = []
         for idx in top5_idx:
