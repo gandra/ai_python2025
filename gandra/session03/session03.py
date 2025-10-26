@@ -131,6 +131,31 @@ def load_recipes_with_embeddings(csv_path: str = DATA_CSV) -> pd.DataFrame:
     """
 
     df = pd.read_csv(csv_path)
+    # Detaljno objašnjenje izraza ispod:
+    # "lambda s: np.array(ast.literal_eval(s), dtype=np.float32)"
+    # - s je string iz CSV kolone "embedding", npr. "[0.12, -0.03, 0.44, ...]".
+    # - ast.literal_eval(s): bezbedno parsira string koji predstavlja Python literal
+    #   (liste/tuple/dict, brojevi, stringovi, True/False/None) u stvarni Python
+    #   objekat. Za razliku od eval, ne izvršava proizvoljan kod i samim tim je
+    #   bezbedan za nepoveren ulaz. Ako string nije validan literal -> baca
+    #   ValueError/SyntaxError.
+    # - np.array(..., dtype=np.float32): konvertuje dobijenu Python listu brojeva
+    #   u NumPy niz i pritom je downcast-uje na float32. Razlozi: (1) manja
+    #   potrošnja memorije (2x manja od float64), (2) brže numeričke operacije,
+    #   (3) većina embedding vektora i pgvector integracije odlično rade sa
+    #   32-bitnim floatovima. Rezultat je 1D np.ndarray oblika (dim,).
+    # Kako radi df["embedding"].apply(...):
+    # - df["embedding"] je pandas Series (jedna kolona). Series.apply(f) primenjuje f
+    #   na SVAKI element serije (element-po-element, Python petlja ispod haube) i vraća
+    #   novu Series iste dužine i istog indeksa.
+    # - U ovom slučaju svaki poziv f(s) vraća np.ndarray(float32), pa je rezultat
+    #   Series čiji je dtype najčešće "object" (jer elementi su nizovi). Tu novu
+    #   Series dodeljujemo u novu kolonu df["embedding_vector"].
+    # - Performanse: apply nije vektorizovano NumPy izvođenje; sporije je od čistog
+    #   NumPy-a, ali je prikladno kada moraš da parsiraš string u Python objekat po
+    #   elementu. Za velike setove podataka razmotri brže parsiranje/batch pristup.
+    # Napomena: Ako su podaci striktno u JSON formatu, alternativa je json.loads(s),
+    # ali literal_eval često radi i za „python-list" stringove koje CSV ume da sadrži.
     df["embedding_vector"] = df["embedding"].apply(
         lambda s: np.array(ast.literal_eval(s), dtype=np.float32)
     )
@@ -502,4 +527,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[warn] Demo pipeline nije uspeo ili je delimično preskočen: {e}")
     _print_notes()
-
