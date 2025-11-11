@@ -15,6 +15,11 @@ i Custom Search JSON API ključeva koje koristi `gandra/session05/session05.py`.
 - Pronađi „Custom Search API“ i klikni „Enable“.
 - U „APIs & Services“ → „Credentials“ klikni „Create credentials“ → „API key“. Sačuvaj vrednost za GOOGLE_CSE_API_KEY.
 
+Razlika: GOOGLE_CSE_CX vs GOOGLE_CSE_API_KEY
+- GOOGLE_CSE_CX (Search engine ID — „cx“): identifikator tvog PSE indeksa. Određuje šta i kako pretražuješ (ceo web ili ograničene sajtove, SafeSearch, jezik…). Menjanjem PSE podešavanja menjaš rezultate bez promene koda. Nije tajna po sebi, ali je konfiguracija — drži ga u env‑u radi konzistentnosti.
+- GOOGLE_CSE_API_KEY: API ključ iz Google Cloud‑a za autorizaciju poziva ka Custom Search JSON API‑ju. Veže se za projekat i kvote. Ovo je tajna — ne komituj; ograniči ključ na „Custom Search API“ i po potrebi na referrers/IP.
+- Oba su potrebna: bez `cx` dobijaš grešku tipa „Missing cx“/„Invalid cx“, a bez `key` 403/unauthorized.
+
 3) Kvote, bezbednost, podešavanja
 - Custom Search API ima kvote i ograničenja — proveri „Quotas“ u Cloud Console‑u.
 - PSE podešavanja (SafeSearch, jezik, zemlje) možeš podešavati u PSE konzoli (npr. SafeSearch=active).
@@ -23,7 +28,7 @@ i Custom Search JSON API ključeva koje koristi `gandra/session05/session05.py`.
 4) Lokalna konfiguracija (env)
 - Postavi promenljive okruženja u shell‑u ili `.env` fajlu (projekt ima `python-dotenv`).
 
-  export OPENAI_API_KEY='sk-...'
+ export OPENAI_API_KEY='sk-...'
   export GOOGLE_CSE_API_KEY='AIza...'
   export GOOGLE_CSE_CX='xxxxxxxxxxxxxxxxx'
 
@@ -48,4 +53,3 @@ Napomene
 - Ne komituj tajne (ključeve) — `.env` je već ignorisan u .gitignore.
 - Ako želiš fiksni jezik, postavi `GOOGLE_LR=lang_en` (ili ne postavljaj da ostane podrazumevano).
 """
-
